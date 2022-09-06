@@ -10,6 +10,7 @@ namespace Stephen.JsonSerializer.Tests
 	{
 		private LoggingEvent _event;
 		private string _json;
+		private int loops = 100;
 
 		[SetUp]
 		public void Setup()
@@ -88,7 +89,7 @@ namespace Stephen.JsonSerializer.Tests
 		[Test]
 		public void TestCustom()
 		{
-			var serializer = new Stephen.JsonSerializer.JsonSerializer();
+			var serializer = new JsonSerializer();
 			var json = serializer.Serialize(_event);
 			Console.WriteLine(json);
 		}
@@ -98,8 +99,8 @@ namespace Stephen.JsonSerializer.Tests
 		public void MeasureCustomSerialize()
 		{
 			var start = DateTime.Now;
-			var serializer = new Stephen.JsonSerializer.JsonSerializer();
-			for (var i = 0; i < 1000; i++)
+			var serializer = new JsonSerializer();
+			for (var i = 0; i < loops; i++)
 			{
 				var json = serializer.Serialize(_event);
 				if (json.Length < 0)
@@ -116,7 +117,7 @@ namespace Stephen.JsonSerializer.Tests
 		public void MeasureNewtonsoftSerialize()
 		{
 			var start = DateTime.Now;
-			for (var i = 0; i < 1000; i++)
+			for (var i = 0; i < loops; i++)
 			{
 				var json = Newtonsoft.Json.JsonConvert.SerializeObject(_event);
 				if (json.Length < 0)
@@ -138,7 +139,7 @@ namespace Stephen.JsonSerializer.Tests
 				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 			};
 
-			for (var i = 0; i < 1000; i++)
+			for (var i = 0; i < loops; i++)
 			{
 				var json = System.Text.Json.JsonSerializer.Serialize(_event, options);
 				if (json.Length < 0)
