@@ -1,7 +1,7 @@
 using System;
 namespace Stephen.JsonSerializer;
 
-class PropertyTuple
+internal class PropertyTuple
 {
     public string Name { get; }
     public object Value { get; }

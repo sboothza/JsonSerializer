@@ -1,13 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Stephen.JsonSerializer</RootNamespace>
-    <LangVersion>latestmajor</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace>Stephen.JsonSerializer</RootNamespace>
+        <LangVersion>latestmajor</LangVersion>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <RepositoryUrl>https://github.com/sboothza/JsonSerializer</RepositoryUrl>
+        <Title>JsonSerializer</Title>
+        <Description>JsonSerializer</Description>
+        <PackageProjectUrl>https://github.com/sboothza/JsonSerializer</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Runtime" Version="4.3.1" />
-  </ItemGroup>
+    <PropertyGroup>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
 
+
+    <ItemGroup>
+        <PackageReference Include="System.Runtime" Version="4.3.1"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>
