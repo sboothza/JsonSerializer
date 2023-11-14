@@ -46,7 +46,7 @@ namespace Stephen.JsonSerializer.Tests
     {
         private LoggingEvent _event;
         private string _json;
-        private int loops = 100;
+        private int loops = 1000;
 
         [SetUp]
         public void Setup()
@@ -136,24 +136,24 @@ namespace Stephen.JsonSerializer.Tests
             Console.WriteLine(json);
         }
 
-        //52ms
+        //80,99
         [Test]
         public void MeasureCustomSerialize()
         {
             var start = DateTime.Now;
             for (var i = 0; i < loops; i++)
             {
-                var json = JsonSerializer.Serialize(_event);
+                var json = JsonSerializer.Serialize(_event, new JsonSerializerOptions{Pretty = false});
                 if (json.Length < 0)
                     throw new InvalidOperationException("broke");
             }
 
             var spent = DateTime.Now - start;
-            Console.WriteLine(spent.TotalMilliseconds);
-            Console.WriteLine(JsonSerializer.Serialize(_event));
+            Console.WriteLine($"{spent.TotalMilliseconds:0.00}");
+            // Console.WriteLine(JsonSerializer.Serialize(_event));
         }
 
-        //130ms
+        //139,78
         [Test]
         public void MeasureNewtonsoftSerialize()
         {
@@ -166,11 +166,10 @@ namespace Stephen.JsonSerializer.Tests
             }
 
             var spent = DateTime.Now - start;
-            Console.WriteLine(spent.TotalMilliseconds);
-            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(_event));
+            Console.WriteLine($"{spent.TotalMilliseconds:0.00}");
         }
 
-        //50ms
+        //55,49
         [Test]
         public void MeasureMicrosoftSerialize()
         {
@@ -188,8 +187,7 @@ namespace Stephen.JsonSerializer.Tests
             }
 
             var spent = DateTime.Now - start;
-            Console.WriteLine(spent.TotalMilliseconds);
-            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(_event));
+            Console.WriteLine($"{spent.TotalMilliseconds:0.00}");
         }
 
         [Test]
@@ -286,6 +284,93 @@ namespace Stephen.JsonSerializer.Tests
             {
                 Assert.IsTrue(false, "should not fail here");
             }
+        }
+
+        [Test]
+        public void TestPretty()
+        {
+            var item = new Sample
+            {
+                Name = "Sample",
+                Id = 12,
+                Children =
+                {
+                    new SampleChild
+                    {
+                        Id = 34,
+                        Name = "Child Name",
+                        EnumTest = MyEnum.Value2,
+                        BoolValue = true
+                    },
+                    new SampleChild
+                    {
+                        Id = 56,
+                        Name = "Child Name 2",
+                        EnumTest = MyEnum.Value1,
+                        BoolValue = false
+                    }
+                }
+            };
+            var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+            {
+                IgnoreErrors = true,
+                Pretty = true
+            });
+            var jsonToMatch =
+                    "{\r\n\t\"Name\" : \"Sample\",\r\n\t\"Id\" : 12,\r\n\t\"Children\" : [\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name\",\r\n\t\t\t\"Id\" : 34,\r\n\t\t\t\"EnumTest\" : \"Value2\",\r\n\t\t\t\"BoolValue\" : \"True\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name 2\",\r\n\t\t\t\"Id\" : 56,\r\n\t\t\t\"EnumTest\" : \"Value1\",\r\n\t\t\t\"BoolValue\" : \"False\"\r\n\t\t}\r\n\t]\r\n}";
+
+            Console.WriteLine(json);
+            Assert.AreEqual(json, jsonToMatch);
+        }
+
+        [Test]
+        public void TestListPretty()
+        {
+            var item = new[]
+            {
+                "stephen",
+                "bob",
+                "bill"
+            };
+            var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+            {
+                IgnoreErrors = true,
+                Pretty = true
+            });
+            var jsonToMatch = "[\r\n\t\"stephen\",\r\n\t\"bob\",\r\n\t\"bill\"\r\n]";
+
+            Console.WriteLine(json);
+            Assert.AreEqual(json, jsonToMatch);
+        }
+        
+        [Test]
+        public void TestNotPretty()
+        {
+            var item = new Sample
+            {
+                Name = "Sample",
+                Id = 12,
+                Children =
+                {
+                    new SampleChild
+                    {
+                        Id = 34,
+                        Name = "Child Name",
+                        EnumTest = MyEnum.Value2,
+                        BoolValue = true
+                    }
+                }
+            };
+            var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+            {
+                IgnoreErrors = true,
+                Pretty = false
+            });
+            var jsonToMatch =
+                    "{\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Name\" : \"Child Name\",\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}";
+
+            Console.WriteLine(json);
+            Assert.AreEqual(json, jsonToMatch);
         }
     }
 }
