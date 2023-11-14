@@ -1,7 +1,5 @@
 ﻿using System.Collections;
-using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Stephen.JsonSerializer
 {
@@ -9,16 +7,16 @@ namespace Stephen.JsonSerializer
     {
         public static string Serialize(object source, JsonSerializerOptions options = null)
         {
-            var writer = new StringWriter(new StringBuilder(1024));
-            Serialize(source, writer, options);
+            var writer = new LayoutStreamWriter();
+            Serialize(source, writer, options, false);
             return writer.ToString();
         }
 
-        private static void Serialize(object source, TextWriter writer, JsonSerializerOptions options)
+        private static void Serialize(object source, LayoutStreamWriter writer, JsonSerializerOptions options, bool sameLine)
         {
             if (source is null)
             {
-                writer.Write("null");
+                writer.Write("null", sameLine);
                 return;
             }
 
@@ -39,46 +37,96 @@ namespace Stephen.JsonSerializer
                 if (sourceEnumerable is IDictionary dictionarySource)
                 {
                     //handle dictionary
-                    writer.Write("{");
 
-                    dictionarySource.GetEnumerator()
-                                    .Cast<DictionaryEntry>()
-                                    .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)))
-                                    .DelimitToWriter((entry, wr) =>
-                                    {
-                                        wr.Write($"\"{entry.Key}\":");
-                                        Serialize(entry.Value, wr, options);
-                                    }, writer, ",");
+                    if (options.Pretty)
+                        writer.WriteLine("{");
+                    else
+                        writer.Write("{");
 
+                    using (writer.StartBlock(options.Pretty))
+                    {
+                        var entries = dictionarySource.GetEnumerator()
+                                                      .Cast<DictionaryEntry>()
+                                                      .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)));
+                        entries.ProcessList(entry =>
+                        {
+                            writer.Write($"\"{entry.Key}\" : ");
+                            Serialize(entry.Value, writer, options, true);
+                            if (options.Pretty)
+                                writer.WriteLine(",");
+                            else
+                                writer.Write(",");
+                        }, entry =>
+                        {
+                            writer.Write($"\"{entry.Key}\" : ");
+                            Serialize(entry.Value, writer, options, true);
+                        });
+                    }
+                    if (options.Pretty)
+                        writer.WriteLine();
+                    
                     writer.Write("}");
                     return;
                 }
 
                 //handle list
-                writer.Write("[");
+                if (options.Pretty)
+                    writer.WriteLine("[");
+                else
+                    writer.Write("[");
 
-                sourceEnumerable.Cast<object>()
-                                .Where(i => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(i)))
-                                .DelimitToWriter((entry, wr) => Serialize(entry, wr, options), writer, ",");
+                using (writer.StartBlock(options.Pretty))
+                {
+                    var entries = sourceEnumerable.Cast<object>()
+                                                  .Where(i => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(i)));
 
+                    entries.ProcessList(o =>
+                    {
+                        Serialize(o, writer, options, false);
+                        if (options.Pretty)
+                            writer.WriteLine(",", false);
+                        else
+                            writer.Write(",");
+                    }, o => Serialize(o, writer, options, false));
+                }
+
+                if (options.Pretty)
+                    writer.WriteLine();
                 writer.Write("]");
                 return;
             }
 
             //single object
-            writer.Write("{");
+            if (options.Pretty)
+                writer.WriteLine("{");
+            else
+                writer.Write("{");
 
-            source.GetType()
-                  .GetProperties()
-                  .Select(prop => PropertyTuple.Create(options, source, prop.Name))
-                  .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)))
-                  .Where(p => p != null)
-                  .DelimitToWriter((item, wr) =>
-                  {
-                      wr.Write($"\"{item.Name}\":");
-                      Serialize(item.Value, writer, options);
-                  }, writer, ",");
+            using (writer.StartBlock(options.Pretty))
+            {
+                var entries = source.GetType()
+                                    .GetProperties()
+                                    .Select(prop => PropertyTuple.Create(options, source, prop.Name))
+                                    .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)))
+                                    .Where(p => p != null);
 
+                entries.ProcessList(tuple =>
+                {
+                    writer.Write($"\"{tuple.Name}\" : ");
+                    Serialize(tuple.Value, writer, options, true);
+                    if (options.Pretty)
+                        writer.WriteLine(",", false);
+                    else
+                        writer.Write(",");
+                }, tuple =>
+                {
+                    writer.Write($"\"{tuple.Name}\" : ");
+                    Serialize(tuple.Value, writer, options, true);
+                });
+            }
+
+            if (options.Pretty)
+                writer.WriteLine();
             writer.Write("}");
         }
     }
