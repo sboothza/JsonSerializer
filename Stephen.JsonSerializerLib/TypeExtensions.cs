@@ -10,20 +10,20 @@ namespace Stephen.JsonSerializer
         {
             switch (source.GetType())
             {
-                case { IsPrimitive: true }:
-                case { IsEnum: true }:
-                case { } decimalType when decimalType == typeof(decimal):
-                    value = $"{source}";
-                    return true;
-
+                case { } boolType when boolType == typeof(bool):
                 case { } stringType when stringType == typeof(string):
                     value = $"\"{source}\"";
                     return true;
-
+                case { IsPrimitive: true }:
+                case { } decimalType when decimalType == typeof(decimal):
+                    value = $"{source}";
+                    return true;
+                case { IsEnum: true }:
+                    value = $"\"{source}\"";
+                    return true;
                 case { } dtType when dtType == typeof(DateTime):
                     value = $"\"{(DateTime)source:O}\"";
                     return true;
-
                 default:
                     value = null;
                     return false;
