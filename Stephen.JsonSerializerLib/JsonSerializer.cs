@@ -108,7 +108,8 @@ namespace Stephen.JsonSerializer
                                     .GetProperties()
                                     .Select(prop => PropertyTuple.Create(options, source, prop.Name))
                                     .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)))
-                                    .Where(p => p != null);
+                                    .Where(p => p != null)
+                                    .Where(p => !options.IgnoreNulls || p.Value is not null);
 
                 entries.ProcessList(tuple =>
                 {

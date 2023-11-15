@@ -60,11 +60,6 @@ namespace Stephen.JsonSerializer.Tests
                 },
                 LoggerName = "Test",
                 TimeStamp = DateTime.Now,
-                //MessageObject = new
-                //                {
-                //                    Message = "this is a message",
-                //                    Id = 1
-                //                },
                 MessageObject = new MessageObjectTest
                 {
                     Message = "this is a message",
@@ -136,7 +131,7 @@ namespace Stephen.JsonSerializer.Tests
             Console.WriteLine(json);
         }
 
-        //80,99
+        //72,11
         [Test]
         public void MeasureCustomSerialize()
         {
@@ -169,7 +164,7 @@ namespace Stephen.JsonSerializer.Tests
             Console.WriteLine($"{spent.TotalMilliseconds:0.00}");
         }
 
-        //55,49
+        //64,89
         [Test]
         public void MeasureMicrosoftSerialize()
         {
@@ -368,6 +363,55 @@ namespace Stephen.JsonSerializer.Tests
             });
             var jsonToMatch =
                     "{\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Name\" : \"Child Name\",\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}";
+
+            Console.WriteLine(json);
+            Assert.AreEqual(json, jsonToMatch);
+        }
+
+        [Test]
+        public void TestNulls()
+        {
+            var item = new Sample
+            {
+                Name = "Sample",
+                Id = 12,
+                Children =
+                {
+                    new SampleChild
+                    {
+                        Id = 34,
+                        Name = null,
+                        EnumTest = MyEnum.Value2,
+                        BoolValue = true
+                    }
+                }
+            };
+            var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+            {
+                IgnoreErrors = true,
+                Pretty = false,
+                IgnoreNulls = true
+            });
+            var jsonToMatch =
+                "{\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}";
+
+            Console.WriteLine(json);
+            Assert.AreEqual(json, jsonToMatch);
+            
+            item = new Sample
+            {
+                Name = "Sample",
+                Id = 12,
+                Children = null
+            };
+            json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+            {
+                IgnoreErrors = true,
+                Pretty = false,
+                IgnoreNulls = true
+            });
+            jsonToMatch =
+                "{\"Name\" : \"Sample\",\"Id\" : 12}";
 
             Console.WriteLine(json);
             Assert.AreEqual(json, jsonToMatch);
