@@ -4,19 +4,23 @@ namespace Stephen.JsonSerializer;
 class PropertyTuple
 {
     public string Name { get; }
+    public string OutputName { get; set; }
     public object Value { get; }
 
-    private PropertyTuple(object source, string name)
+    private PropertyTuple(object source, string name, string outputName = "")
     {
         Name = name;
+        if (outputName == "")
+            outputName = name;
         Value = source.GetFieldOrPropertyValue(Name);
+        OutputName = outputName;
     }
 
-    public static PropertyTuple Create(JsonSerializerOptions options, object source, string name)
+    public static PropertyTuple Create(JsonSerializerOptions options, object source, string name, string outputName = "")
     {
         try
         {
-            return new PropertyTuple(source, name);
+            return new PropertyTuple(source, name, outputName);
         }
         catch (Exception)
         {

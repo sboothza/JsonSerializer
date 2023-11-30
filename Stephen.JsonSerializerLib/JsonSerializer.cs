@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Stephen.JsonSerializer
@@ -12,7 +13,8 @@ namespace Stephen.JsonSerializer
             return writer.ToString();
         }
 
-        private static void Serialize(object source, LayoutStreamWriter writer, JsonSerializerOptions options, bool sameLine)
+        private static void Serialize(object source, LayoutStreamWriter writer, JsonSerializerOptions options,
+            bool sameLine)
         {
             if (source is null)
             {
@@ -46,8 +48,8 @@ namespace Stephen.JsonSerializer
                     using (writer.StartBlock(options.Pretty))
                     {
                         var entries = dictionarySource.GetEnumerator()
-                                                      .Cast<DictionaryEntry>()
-                                                      .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)));
+                            .Cast<DictionaryEntry>()
+                            .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)));
                         entries.ProcessList(entry =>
                         {
                             writer.Write($"\"{entry.Key}\" : ");
@@ -62,9 +64,10 @@ namespace Stephen.JsonSerializer
                             Serialize(entry.Value, writer, options, true);
                         });
                     }
+
                     if (options.Pretty)
                         writer.WriteLine();
-                    
+
                     writer.Write("}");
                     return;
                 }
@@ -78,7 +81,7 @@ namespace Stephen.JsonSerializer
                 using (writer.StartBlock(options.Pretty))
                 {
                     var entries = sourceEnumerable.Cast<object>()
-                                                  .Where(i => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(i)));
+                        .Where(i => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(i)));
 
                     entries.ProcessList(o =>
                     {
@@ -104,16 +107,34 @@ namespace Stephen.JsonSerializer
 
             using (writer.StartBlock(options.Pretty))
             {
-                var entries = source.GetType()
-                                    .GetProperties()
-                                    .Select(prop => PropertyTuple.Create(options, source, prop.Name))
-                                    .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)))
-                                    .Where(p => p != null)
-                                    .Where(p => !options.IgnoreNulls || p.Value is not null);
+                var properties = source.GetType()
+                    .GetProperties()
+                    .Where(p => options.IgnoreTypes.All(t => t != p.PropertyType));
+
+                var entries = new List<PropertyTuple>();
+                foreach (var prop in properties)
+                {
+                    PropertyTuple tuple = null;
+                    var attrib = (JsonPropertyAttribute)prop.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
+                        .FirstOrDefault();
+                    if (attrib is not null && !attrib.Ignore && !options.IgnoreAttributes)
+                        tuple = PropertyTuple.Create(options, source, prop.Name, attrib.Name);
+                    else if (attrib is null || options.IgnoreAttributes)
+                        tuple = PropertyTuple.Create(options, source, prop.Name);
+
+                    if (tuple is not null && !(options.IgnoreNulls && tuple.Value is null))
+                        entries.Add(tuple);
+                }
+
+                // var entries = properties
+                //                     .Select(prop => PropertyTuple.Create(options, source, prop.Name))
+                //                     .Where(p => !options.IgnoreTypes.Any(t => t.IsInstanceOfType(p.Value)))
+                //                     .Where(p => p != null)
+                //                     .Where(p => !options.IgnoreNulls || p.Value is not null);
 
                 entries.ProcessList(tuple =>
                 {
-                    writer.Write($"\"{tuple.Name}\" : ");
+                    writer.Write($"\"{tuple.OutputName}\" : ");
                     Serialize(tuple.Value, writer, options, true);
                     if (options.Pretty)
                         writer.WriteLine(",", false);
@@ -121,7 +142,7 @@ namespace Stephen.JsonSerializer
                         writer.Write(",");
                 }, tuple =>
                 {
-                    writer.Write($"\"{tuple.Name}\" : ");
+                    writer.Write($"\"{tuple.OutputName}\" : ");
                     Serialize(tuple.Value, writer, options, true);
                 });
             }
