@@ -41,6 +41,8 @@ namespace Stephen.JsonSerializer.Tests
         public long Id { get; set; }
         public MyEnum EnumTest { get; set; }
         public bool BoolValue { get; set; }
+        [JsonProperty(Ignore = true)] 
+        public string ShouldIgnore { get; set; }
     }
 
     [TestFixture]
@@ -133,14 +135,14 @@ namespace Stephen.JsonSerializer.Tests
             Console.WriteLine(json);
         }
 
-        //72,11
+        //32.40
         [Test]
         public void MeasureCustomSerialize()
         {
             var start = DateTime.Now;
             for (var i = 0; i < loops; i++)
             {
-                var json = JsonSerializer.Serialize(_event, new JsonSerializerOptions { Pretty = false });
+                var json = JsonSerializer.Serialize(_event, new JsonSerializerOptions());
                 if (json.Length < 0)
                     throw new InvalidOperationException("broke");
             }
@@ -150,7 +152,7 @@ namespace Stephen.JsonSerializer.Tests
             // Console.WriteLine(JsonSerializer.Serialize(_event));
         }
 
-        //139,78
+        //83.00
         [Test]
         public void MeasureNewtonsoftSerialize()
         {
@@ -166,7 +168,7 @@ namespace Stephen.JsonSerializer.Tests
             Console.WriteLine($"{spent.TotalMilliseconds:0.00}");
         }
 
-        //64,89
+        //27.67
         [Test]
         public void MeasureMicrosoftSerialize()
         {
@@ -282,62 +284,60 @@ namespace Stephen.JsonSerializer.Tests
             }
         }
 
-        [Test]
-        public void TestPretty()
-        {
-            var item = new Sample
-            {
-                Name = "Sample",
-                Id = 12,
-                Children =
-                {
-                    new SampleChild
-                    {
-                        Id = 34,
-                        Name = "Child Name",
-                        EnumTest = MyEnum.Value2,
-                        BoolValue = true
-                    },
-                    new SampleChild
-                    {
-                        Id = 56,
-                        Name = "Child Name 2",
-                        EnumTest = MyEnum.Value1,
-                        BoolValue = false
-                    }
-                }
-            };
-            var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
-            {
-                IgnoreErrors = true,
-                Pretty = true
-            });
-            var jsonToMatch =
-                "{\r\n\t\"Name\" : \"Sample\",\r\n\t\"Id\" : 12,\r\n\t\"Children\" : [\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name\",\r\n\t\t\t\"Id\" : 34,\r\n\t\t\t\"EnumTest\" : \"Value2\",\r\n\t\t\t\"BoolValue\" : \"True\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name 2\",\r\n\t\t\t\"Id\" : 56,\r\n\t\t\t\"EnumTest\" : \"Value1\",\r\n\t\t\t\"BoolValue\" : \"False\"\r\n\t\t}\r\n\t]\r\n}";
+        // [Test]
+        // public void TestPretty()
+        // {
+        //     var item = new Sample
+        //     {
+        //         Name = "Sample",
+        //         Id = 12,
+        //         Children =
+        //         {
+        //             new SampleChild
+        //             {
+        //                 Id = 34,
+        //                 Name = "Child Name",
+        //                 EnumTest = MyEnum.Value2,
+        //                 BoolValue = true
+        //             },
+        //             new SampleChild
+        //             {
+        //                 Id = 56,
+        //                 Name = "Child Name 2",
+        //                 EnumTest = MyEnum.Value1,
+        //                 BoolValue = false
+        //             }
+        //         }
+        //     };
+        //     var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+        //     {
+        //         IgnoreErrors = true
+        //     });
+        //     var jsonToMatch =
+        //         "{\r\n\t\"Name\" : \"Sample\",\r\n\t\"Id\" : 12,\r\n\t\"Children\" : [\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name\",\r\n\t\t\t\"Id\" : 34,\r\n\t\t\t\"EnumTest\" : \"Value2\",\r\n\t\t\t\"BoolValue\" : \"True\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name 2\",\r\n\t\t\t\"Id\" : 56,\r\n\t\t\t\"EnumTest\" : \"Value1\",\r\n\t\t\t\"BoolValue\" : \"False\"\r\n\t\t}\r\n\t]\r\n}";
+        //
+        //     Console.WriteLine(json);
+        //     Assert.AreEqual(json, jsonToMatch);
+        // }
 
-            Console.WriteLine(json);
-            Assert.AreEqual(json, jsonToMatch);
-        }
-
-        [Test]
-        public void TestListPretty()
-        {
-            var item = new[]
-            {
-                "stephen",
-                "bob",
-                "bill"
-            };
-            var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
-            {
-                IgnoreErrors = true,
-                Pretty = true
-            });
-            var jsonToMatch = "[\r\n\t\"stephen\",\r\n\t\"bob\",\r\n\t\"bill\"\r\n]";
-
-            Console.WriteLine(json);
-            Assert.AreEqual(json, jsonToMatch);
-        }
+        // [Test]
+        // public void TestListPretty()
+        // {
+        //     var item = new[]
+        //     {
+        //         "stephen",
+        //         "bob",
+        //         "bill"
+        //     };
+        //     var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
+        //     {
+        //         IgnoreErrors = true
+        //     });
+        //     var jsonToMatch = "[\r\n\t\"stephen\",\r\n\t\"bob\",\r\n\t\"bill\"\r\n]";
+        //
+        //     Console.WriteLine(json);
+        //     Assert.AreEqual(json, jsonToMatch);
+        // }
 
         [Test]
         public void TestNotPretty()
@@ -359,8 +359,7 @@ namespace Stephen.JsonSerializer.Tests
             };
             var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
             {
-                IgnoreErrors = true,
-                Pretty = false
+                IgnoreErrors = true
             });
             var jsonToMatch =
                 "{\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Name\" : \"Child Name\",\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}";
@@ -390,7 +389,6 @@ namespace Stephen.JsonSerializer.Tests
             var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
             {
                 IgnoreErrors = true,
-                Pretty = false,
                 IgnoreNulls = true
             });
             var jsonToMatch =
@@ -408,7 +406,6 @@ namespace Stephen.JsonSerializer.Tests
             json = JsonSerializer.Serialize(item, new JsonSerializerOptions
             {
                 IgnoreErrors = true,
-                Pretty = false,
                 IgnoreNulls = true
             });
             jsonToMatch =
@@ -438,28 +435,26 @@ namespace Stephen.JsonSerializer.Tests
             };
 
             var update = new ModelUpdate<Sample>(null, item);
-            
+
             var json = JsonSerializer.Serialize(update, new JsonSerializerOptions
             {
-                IgnoreErrors = true,
-                Pretty = false
+                IgnoreErrors = true
             });
             Console.WriteLine(json);
             Assert.IsNotEmpty(json);
             Assert.AreEqual(
                 "{\"<OldItem>k__BackingField\" : null,\"<NewItem>k__BackingField\" : {\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Name\" : \"Child Name\",\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}}",
                 json);
-            
+
             json = JsonSerializer.Serialize(update, new JsonSerializerOptions
             {
                 IgnoreErrors = true,
-                Pretty = false,
                 IgnoreAttributes = true
             });
             Console.WriteLine(json);
             Assert.IsNotEmpty(json);
             Assert.AreEqual(
-                "{\"OldItem\" : null,\"NewItem\" : {\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Name\" : \"Child Name\",\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}}",
+                "{\"OldItem\" : null,\"NewItem\" : {\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Name\" : \"Child Name\",\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\",\"ShouldIgnore\" : null}]}}",
                 json);
         }
     }
