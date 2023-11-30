@@ -276,7 +276,7 @@ public class ComplexTest
             PropertyNameCaseInsensitive = true,
             Converters = { new JsonStringEnumConverter() }
         });
-        var newJson = JsonSerializer.Serialize(fixture, new JsonSerializerOptions{Pretty = true});
+        var newJson = JsonSerializer.Serialize(fixture, new JsonSerializerOptions());
         Console.WriteLine(newJson);
     }
 }

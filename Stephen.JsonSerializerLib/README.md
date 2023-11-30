@@ -18,7 +18,14 @@ It should be possible to drop in with minimal changes.
 
 Version 1.0 - Not quite complete or fully tested yet.
 
-Preliminary performance testing initially indicated much better performance, but now it seems to be on par with the System.Text.Json
+***
+
+## Performance
+
+Preliminary performance testing initially indicated much better performance, but now seems slightly less
+
+Runs roughly `40%` of NewtonSoft.Json (`2.5x` faster)
+Runs roughly `117%` of System.Text.Json (`1.1x` slower)
 
 ***
 
