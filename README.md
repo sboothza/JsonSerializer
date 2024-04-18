@@ -4,21 +4,43 @@
 
 This package contains a JsonSerializer implementation.
 
-It's not very robust, and was meant to just test a theory - that serialization isn't nearly as hard as they make it out to be.   
+It was meant to just test a theory - that serialization isn't nearly as hard as they make it out to be.
 
 **Conclusion** - it isn't.
 
-Built with **.NET Standard 2.1** - no other dependencies.
+**However** - Deserialization is a bit of a bugger.
 
-The tests are **.NET 6.0**, referencing nunit, newtonsoft
+Built with **.NET 8.0** - no other dependencies.
+
+The tests are **.NET 8.0**, referencing nunit, newtonsoft, system.text.json
 
 It exposes a signature very similar to the Newtonsoft.Json and System.Text.Json libraries.
 
 It should be possible to drop in with minimal changes.
 
-Version 1.0 - Not quite complete or fully tested yet.
+Version 2.0 - Not quite complete or fully tested yet.
 
-Preliminary performance testing initially indicated much better performance, but now it seems to be on par with the System.Text.Json
+***
+
+## Performance
+
+Preliminary performance testing initially indicated much better performance, but now is only slightly better.  
+Which is still pretty cool.
+
+Looping 1000 times
+
+#### Serialization
+
+- MeasureCustomSerialize - 25.81ms
+- MeasureNewtonsoftSerialize - 35.89ms
+- MeasureMicrosoftSerialize - 30.74ms
+
+#### Deserialization
+
+- MeasureCustomDeserialize - 20.10ms
+- MeasureNewtonsoftDeserialize - 24.96ms
+- MeasureMicrosoftDeserialize - 22.94ms
+
 
 ***
 
