@@ -179,45 +179,5 @@ namespace Stephen.JsonSerializer
 			}
 			throw new IndexOutOfRangeException("Could not deserialize");
 		}
-
-		//private static JsonObject JsonToDict(string json)
-		//{
-		//    var pointer = 0;
-		//    var currentChar = json[pointer++];
-		//    switch (currentChar)
-		//    {
-		//        case ' ':
-		//        case '\t':
-		//        case '\r':
-		//        case '\n':
-		//            break;
-
-		//        case '{':
-		//            return ParseObject(json, ref pointer);
-
-		//        case '[':
-		//            return ParseList(json, ref pointer);
-
-		//        default:
-		//            return ParseValue(json, ref pointer);
-		//    }
-
-		//    return null;
-		//}
-
-		//private static JsonObject ParseValue(string json, ref int pointer)
-		//{
-		//    return null;
-		//}
-
-		//private static JsonObject ParseList(string json, ref int pointer)
-		//{
-		//    return null;
-		//}
-
-		//private static JsonObject ParseObject(string json, ref int pointer)
-		//{
-		//    return null;
-		//}
 	}
 }
