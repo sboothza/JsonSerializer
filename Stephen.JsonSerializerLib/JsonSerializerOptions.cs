@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Stephen.JsonSerializer;
 
 public class JsonSerializerOptions

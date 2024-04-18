@@ -85,7 +85,7 @@ namespace Stephen.JsonSerializer.Tests
 	{
 		public string Name { get; set; }
 		public long Id { get; set; }
-		public List<SampleChild> Children { get; set; } = new List<SampleChild>();
+		public List<SampleChild> Children { get; set; } = [];
 	}
 
 	public class SampleChild
@@ -103,7 +103,7 @@ namespace Stephen.JsonSerializer.Tests
 	{
 		private LoggingEvent _event;
 		private string _json;
-		private int loops = 1000;
+		private const int LOOPS = 1000;
 
 		[SetUp]
 		public void Setup()
@@ -194,7 +194,7 @@ namespace Stephen.JsonSerializer.Tests
 		public void MeasureCustomSerialize()
 		{
 			var start = DateTime.Now;
-			for (var i = 0; i < loops; i++)
+			for (var i = 0; i < LOOPS; i++)
 			{
 				var json = JsonSerializer.Serialize(_event, new JsonSerializerOptions());
 				if (json.Length < 0)
@@ -203,7 +203,6 @@ namespace Stephen.JsonSerializer.Tests
 
 			var spent = DateTime.Now - start;
 			Console.WriteLine($"{spent.TotalMilliseconds:0.00}");
-			// Console.WriteLine(JsonSerializer.Serialize(_event));
 		}
 
 		//35.89
@@ -211,7 +210,7 @@ namespace Stephen.JsonSerializer.Tests
 		public void MeasureNewtonsoftSerialize()
 		{
 			var start = DateTime.Now;
-			for (var i = 0; i < loops; i++)
+			for (var i = 0; i < LOOPS; i++)
 			{
 				var json = Newtonsoft.Json.JsonConvert.SerializeObject(_event);
 				if (json.Length < 0)
@@ -232,7 +231,7 @@ namespace Stephen.JsonSerializer.Tests
 				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 			};
 
-			for (var i = 0; i < loops; i++)
+			for (var i = 0; i < LOOPS; i++)
 			{
 				var json = System.Text.Json.JsonSerializer.Serialize(_event, options);
 				if (json.Length < 0)
@@ -272,7 +271,7 @@ namespace Stephen.JsonSerializer.Tests
 				});
 				Assert.IsTrue(false, "should not pass");
 			}
-			catch (Exception ex)
+			catch
 			{
 				Assert.IsTrue(true, "should fail here");
 			}
@@ -287,7 +286,7 @@ namespace Stephen.JsonSerializer.Tests
 				Assert.IsTrue(true, "should pass");
 				Assert.IsNotEmpty(json);
 			}
-			catch (Exception ex)
+			catch
 			{
 				Assert.IsTrue(false, "should not fail here");
 			}
@@ -338,60 +337,6 @@ namespace Stephen.JsonSerializer.Tests
 			}
 		}
 
-		// [Test]
-		// public void TestPretty()
-		// {
-		//     var item = new Sample
-		//     {
-		//         Name = "Sample",
-		//         Id = 12,
-		//         Children =
-		//         {
-		//             new SampleChild
-		//             {
-		//                 Id = 34,
-		//                 Name = "Child Name",
-		//                 EnumTest = MyEnum.Value2,
-		//                 BoolValue = true
-		//             },
-		//             new SampleChild
-		//             {
-		//                 Id = 56,
-		//                 Name = "Child Name 2",
-		//                 EnumTest = MyEnum.Value1,
-		//                 BoolValue = false
-		//             }
-		//         }
-		//     };
-		//     var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
-		//     {
-		//         IgnoreErrors = true
-		//     });
-		//     var jsonToMatch =
-		//         "{\r\n\t\"Name\" : \"Sample\",\r\n\t\"Id\" : 12,\r\n\t\"Children\" : [\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name\",\r\n\t\t\t\"Id\" : 34,\r\n\t\t\t\"EnumTest\" : \"Value2\",\r\n\t\t\t\"BoolValue\" : \"True\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"Name\" : \"Child Name 2\",\r\n\t\t\t\"Id\" : 56,\r\n\t\t\t\"EnumTest\" : \"Value1\",\r\n\t\t\t\"BoolValue\" : \"False\"\r\n\t\t}\r\n\t]\r\n}";
-		//
-		//     Console.WriteLine(json);
-		//     Assert.AreEqual(json, jsonToMatch);
-		// }
-
-		// [Test]
-		// public void TestListPretty()
-		// {
-		//     var item = new[]
-		//     {
-		//         "stephen",
-		//         "bob",
-		//         "bill"
-		//     };
-		//     var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
-		//     {
-		//         IgnoreErrors = true
-		//     });
-		//     var jsonToMatch = "[\r\n\t\"stephen\",\r\n\t\"bob\",\r\n\t\"bill\"\r\n]";
-		//
-		//     Console.WriteLine(json);
-		//     Assert.AreEqual(json, jsonToMatch);
-		// }
 
 		[Test]
 		public void TestNotPretty()
@@ -462,8 +407,7 @@ namespace Stephen.JsonSerializer.Tests
 				IgnoreErrors = true,
 				IgnoreNulls = true
 			});
-			jsonToMatch =
-				"{\"Name\" : \"Sample\",\"Id\" : 12}";
+			jsonToMatch = "{\"Name\" : \"Sample\",\"Id\" : 12}";
 
 			Console.WriteLine(json);
 			Assert.AreEqual(json, jsonToMatch);
@@ -533,7 +477,7 @@ namespace Stephen.JsonSerializer.Tests
 			{
 				IgnoreErrors = true
 			};
-			for (var i = 0; i < loops; i++)
+			for (var i = 0; i < LOOPS; i++)
 			{
 				var obj = JsonSerializer.Deserialize<ModelUpdate<BasicItem>>(json, options);
 				if (obj.NewItem is null)
@@ -551,7 +495,7 @@ namespace Stephen.JsonSerializer.Tests
 			var json = "{\"<OldItem>k__BackingField\":null,\"<NewItem>k__BackingField\":{\"Id\":\"1656264681828\",\"Source\":\"Betradar\",\"SportId\":\"Tennis\",\"FixtureId\":\"34312309\",\"Timestamp\":\"/Date(1701328228680)/\",\"Type\":\"MatchStatusUpdate\"}}";
 			var settings = new JsonSerializerSettings { Error = (se, ev) => { ev.ErrorContext.Handled = true; } };
 			var start = DateTime.Now;
-			for (var i = 0; i < loops; i++)
+			for (var i = 0; i < LOOPS; i++)
 			{
 				var obj = Newtonsoft.Json.JsonConvert.DeserializeObject<ModelUpdate<BasicItem>>(json, settings);
 				if (obj.NewItem is null)
@@ -573,7 +517,7 @@ namespace Stephen.JsonSerializer.Tests
 				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 			};
 
-			for (var i = 0; i < loops; i++)
+			for (var i = 0; i < LOOPS; i++)
 			{
 				var obj = System.Text.Json.JsonSerializer.Deserialize<ModelUpdateMicrosoft<BasicItem>>(json, options);
 				if (obj.NewItem is null)

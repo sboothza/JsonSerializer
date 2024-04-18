@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.Json.Nodes;
 
 namespace Stephen.JsonSerializer
 {
@@ -78,22 +76,25 @@ namespace Stephen.JsonSerializer
 			//single object
 			writer.Write("{");
 
-			var properties = source.GetType()
-				.GetProperties();
-
 			var entries = new List<PropertyTuple>();
-			foreach (var prop in properties)
-			{
-				PropertyTuple tuple = null;
-				var attrib = (JsonPropertyAttribute)prop.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
-					.FirstOrDefault();
-				if (attrib is not null && !attrib.Ignore && !options.IgnoreAttributes)
-					tuple = PropertyTuple.Create(options, source, prop.Name, attrib.Name);
-				else if (attrib is null || options.IgnoreAttributes)
-					tuple = PropertyTuple.Create(options, source, prop.Name);
+			var props = source.GetType().GetProperties()
+				.Select(p => new
+				{
+					prop = p,
+					name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Name ?? p.Name,
+					ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Ignore ?? false
+				}).Where(pn => options.IgnoreAttributes || !pn.ignore);
 
-				if (tuple is not null && !(options.IgnoreNulls && tuple.Value is null))
-					entries.Add(tuple);
+			foreach (var prop in props)
+			{
+				if (options.IgnoreNulls && source.GetFieldOrPropertyValue(prop.prop.Name) is null)
+					continue;
+				else
+				{
+					var entry = PropertyTuple.Create(options, source, prop.prop.Name, options.IgnoreAttributes ? prop.prop.Name : prop.name);
+					if (entry != null)
+						entries.Add(entry);
+				}
 			}
 
 			entries.ProcessList(tuple =>
@@ -120,12 +121,12 @@ namespace Stephen.JsonSerializer
 			var parser = new JsonParser();
 			var tokens = parser.Parse(json);
 			var jsonObject = parser.ProcessTokens(tokens);
-
-			return Deserialize(jsonObject, type);
+			options ??= new JsonSerializerOptions();
+			return Deserialize(jsonObject, type, options);
 		}
 
 
-		private static object Deserialize(JsonObject obj, Type type)
+		private static object Deserialize(JsonObject obj, Type type, JsonSerializerOptions options)
 		{
 			if (obj == null)
 				return null;
@@ -149,19 +150,23 @@ namespace Stephen.JsonSerializer
 			if (obj is JsonObjectComplex jsonObjectComplex)
 			{
 				object result = Activator.CreateInstance(type);
-				foreach (var prop in type.GetProperties())
-				{
-					if (prop.CanWrite)
+
+				var props = type.GetProperties()
+					.Select(p => new
 					{
-						var name = prop.Name;
-						var custom = prop.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault();
-						if (custom is not null)
-						{
-							name = custom.GetFieldOrPropertyValue("Name").ToString();
-						}
+						prop = p,
+						name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Name ?? p.Name,
+						ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Ignore ?? false
+					}).Where(pn => options.IgnoreAttributes || !pn.ignore);
+
+				foreach (var prop in props)
+				{
+					if (prop.prop.CanWrite)
+					{
+						var name = prop.name;
 						var jsonValue = jsonObjectComplex.Complex[name];
-						var value = Deserialize(jsonValue, prop.PropertyType);
-						prop.SetValue(result, value);
+						var value = Deserialize(jsonValue, prop.prop.PropertyType, options);
+						prop.prop.SetValue(result, value);
 					}
 				}
 
@@ -173,7 +178,7 @@ namespace Stephen.JsonSerializer
 				IList list = (IList)Activator.CreateInstance(listType);
 				foreach (var item in jsonList.Array)
 				{
-					list.Add(Deserialize(item, type));
+					list.Add(Deserialize(item, type, options));
 				}
 				return list;
 			}
