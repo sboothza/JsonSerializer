@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>Stephen.JsonSerializer</RootNamespace>
         <LangVersion>latestmajor</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -10,7 +10,7 @@
         <Description>JsonSerializer</Description>
         <PackageProjectUrl>https://github.com/sboothza/JsonSerializer</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <Version>1.0.5</Version>
+        <Version>2.0.0</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -19,9 +19,9 @@
 
 
     <ItemGroup>
-        <PackageReference Include="System.Runtime" Version="4.3.1"/>
+        <PackageReference Include="System.Runtime" Version="4.3.1" />
     </ItemGroup>
     <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>

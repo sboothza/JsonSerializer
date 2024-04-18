@@ -8,24 +8,39 @@ It was meant to just test a theory - that serialization isn't nearly as hard as 
 
 **Conclusion** - it isn't.
 
-Built with **.NET 6.0** - no other dependencies.
+**However** - Deserialization is a bit of a bugger.
 
-The tests are **.NET 6.0**, referencing nunit, newtonsoft, system.text.json
+Built with **.NET 8.0** - no other dependencies.
+
+The tests are **.NET 8.0**, referencing nunit, newtonsoft, system.text.json
 
 It exposes a signature very similar to the Newtonsoft.Json and System.Text.Json libraries.
 
 It should be possible to drop in with minimal changes.
 
-Version 1.0 - Not quite complete or fully tested yet.
+Version 2.0 - Not quite complete or fully tested yet.
 
 ***
 
 ## Performance
 
-Preliminary performance testing initially indicated much better performance, but now seems slightly less
+Preliminary performance testing initially indicated much better performance, but now is only slightly better.  
+Which is still pretty cool.
 
-Runs roughly `40%` of NewtonSoft.Json (`2.5x` faster)
-Runs roughly `117%` of System.Text.Json (`1.1x` slower)
+Looping 1000 times
+
+#### Serialization
+
+- MeasureCustomSerialize - 25.81ms
+- MeasureNewtonsoftSerialize - 35.89ms
+- MeasureMicrosoftSerialize - 30.74ms
+
+#### Deserialization
+
+- MeasureCustomDeserialize - 20.10ms
+- MeasureNewtonsoftDeserialize - 24.96ms
+- MeasureMicrosoftDeserialize - 22.94ms
+
 
 ***
 

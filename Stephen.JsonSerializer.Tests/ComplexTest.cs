@@ -279,4 +279,10 @@ public class ComplexTest
         var newJson = JsonSerializer.Serialize(fixture, new JsonSerializerOptions());
         Console.WriteLine(newJson);
     }
+
+    [Test]
+    public void TestDeserialize()
+    {
+        
+    }
 }
