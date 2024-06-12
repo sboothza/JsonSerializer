@@ -78,6 +78,7 @@ namespace Stephen.JsonSerializer
 		{
 			var tokens = new List<JsonToken>();
 			_reader = new StringReader(json);
+			int charCount = 0;
 			while (_reader.Peek() != -1)
 			{
 				var c = (char)_reader.Peek();
@@ -87,7 +88,7 @@ namespace Stephen.JsonSerializer
 					continue;
 				}
 
-				if (c == '"' || c == '\'')
+				if (c == '"')
 				{
 					var str = ParseString();
 					tokens.Add(new StringToken(str));
@@ -136,6 +137,7 @@ namespace Stephen.JsonSerializer
 				}
 				else
 					throw new Exception("Unknown character in expression: " + c);
+				charCount++;
 			}
 			return tokens;
 		}
@@ -144,7 +146,7 @@ namespace Stephen.JsonSerializer
 		{
 			_reader.Read(); //skip first quote
 			var sb = new StringBuilder(1024);
-			while (_reader.Peek() != '"' && _reader.Peek() != '\'')
+			while (_reader.Peek() != '"')
 			{
 				sb.Append((char)_reader.Read());
 			}
