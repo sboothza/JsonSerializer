@@ -85,18 +85,23 @@ namespace Stephen.JsonSerializer
                                   name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
                                                                   .FirstOrDefault())?.Name ?? p.Name,
                                   ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
-                                                                    .FirstOrDefault())?.Ignore ?? false
+                                                                    .FirstOrDefault())?.Ignore ?? false,
+                                  renamed = !string.IsNullOrEmpty(((JsonPropertyAttribute)p
+                                      .GetCustomAttributes(typeof(JsonPropertyAttribute), true)
+                                      .FirstOrDefault())?.Name)
                               })
-                              .Where(pn => options.IgnoreAttributes || !pn.ignore);
+                              .Where(pn => options.IgnorePropertyAttributes || !pn.ignore);
 
             foreach (var prop in props)
             {
-                if (options.IgnoreNulls && source.GetFieldOrPropertyValue(prop.prop.Name) is null)
+                if (options.DontSerializeNulls && source.GetFieldOrPropertyValue(prop.prop.Name) is null)
                     continue;
                 else
                 {
-                    var entry = PropertyTuple.Create(options, source, prop.prop.Name,
-                        options.IgnoreAttributes ? prop.prop.Name : prop.name);
+                    var name = options.IgnorePropertyAttributes ? prop.prop.Name : prop.name;
+                    if (!prop.renamed && !options.IgnorePropertyAttributes)
+                        name = name.ConvertName(options.Naming);
+                    var entry = PropertyTuple.Create(options, source, prop.prop.Name, name);
                     if (entry != null)
                         entries.Add(entry);
                 }
@@ -163,9 +168,12 @@ namespace Stephen.JsonSerializer
                                     name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
                                                                     .FirstOrDefault())?.Name ?? p.Name,
                                     ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
-                                                                      .FirstOrDefault())?.Ignore ?? false
+                                                                      .FirstOrDefault())?.Ignore ?? false,
+                                    renamed = !string.IsNullOrEmpty(((JsonPropertyAttribute)p
+                                        .GetCustomAttributes(typeof(JsonPropertyAttribute), true)
+                                        .FirstOrDefault())?.Name)
                                 })
-                                .Where(pn => options.IgnoreAttributes || !pn.ignore);
+                                .Where(pn => options.IgnorePropertyAttributes || !pn.ignore);
 
                 foreach (var prop in props)
                 {
@@ -176,7 +184,10 @@ namespace Stephen.JsonSerializer
                         if (options.RemapFields.TryGetValue(name, out string mappedName))
                             jsonValue = jsonObjectComplex.Complex[mappedName];
                         else
+                        {
+                            name = name.ConvertName(options.Naming);
                             jsonValue = jsonObjectComplex.Complex[name];
+                        }
                         var propertyType = GetBaseType(prop.prop.PropertyType);
                         var value = Deserialize(jsonValue, propertyType, options);
                         prop.prop.SetValue(result, value);

@@ -388,7 +388,7 @@ namespace Stephen.JsonSerializer.Tests
 			var json = JsonSerializer.Serialize(item, new JsonSerializerOptions
 			{
 				IgnoreErrors = true,
-				IgnoreNulls = true
+				DontSerializeNulls = true
 			});
 			var jsonToMatch =
 				"{\"Name\" : \"Sample\",\"Id\" : 12,\"Children\" : [{\"Id\" : 34,\"EnumTest\" : \"Value2\",\"BoolValue\" : \"True\"}]}";
@@ -405,7 +405,7 @@ namespace Stephen.JsonSerializer.Tests
 			json = JsonSerializer.Serialize(item, new JsonSerializerOptions
 			{
 				IgnoreErrors = true,
-				IgnoreNulls = true
+				DontSerializeNulls = true
 			});
 			jsonToMatch = "{\"Name\" : \"Sample\",\"Id\" : 12}";
 
@@ -447,7 +447,7 @@ namespace Stephen.JsonSerializer.Tests
 			json = JsonSerializer.Serialize(update, new JsonSerializerOptions
 			{
 				IgnoreErrors = true,
-				IgnoreAttributes = true
+				IgnorePropertyAttributes = true
 			});
 			Console.WriteLine(json);
 			Assert.IsNotEmpty(json);
