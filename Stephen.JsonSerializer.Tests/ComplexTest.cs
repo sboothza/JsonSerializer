@@ -18,8 +18,6 @@ public enum DateTimeZoneType
     Unknown,
 }
 
-
-
 public class TestListObj
 {
     [JsonProperty("list")]
@@ -37,12 +35,17 @@ public class TestListObjObj
     public List<Dummy> List { get; set; }
 }
 
+public class TestNaming
+{
+    public string StringValue { get; set; }
+    public string OtherValue { get; set; }
+    [JsonProperty("overridevalue")]
+    public string OverrideValue { get; set; }
+}
+
 [TestFixture]
 public class ComplexTest
 {
-    
-    
-
     [Test]
     public void TestListObjectDeserialize()
     {
@@ -74,5 +77,31 @@ public class ComplexTest
         Assert.AreEqual(obj.List[0].Value, "value1");
         Assert.AreEqual(obj.List[1].Value, "value2");
         Console.WriteLine(obj);
+    }
+
+    [Test]
+    public void TestNaming()
+    {
+        var obj = new TestNaming
+        {
+            StringValue = "test string value",
+            OverrideValue = "test override value",
+            OtherValue = "test other value"
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            Naming = NamingOptions.SnakeCase
+        };
+
+        var json = JsonSerializer.Serialize(obj, options);
+        Assert.AreEqual("{\"string_value\" : \"test string value\",\"other_value\" : \"test other value\",\"overridevalue\" : \"test override value\"}", json);
+
+        var newObj = JsonSerializer.Deserialize<TestNaming>(json, options);
+        
+        Assert.NotNull(newObj);
+        Assert.AreEqual(newObj.StringValue, obj.StringValue);
+        Assert.AreEqual(newObj.OverrideValue, obj.OverrideValue);
+        Assert.AreEqual(newObj.OtherValue, obj.OtherValue);
     }
 }
