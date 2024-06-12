@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,11 @@ namespace Stephen.JsonSerializer
 		{
 			Value = value;
 		}
+
+		public override string ToString()
+		{
+			return $"str:{Value}";
+		}
 	}
 	public class NumberToken : JsonToken
 	{
@@ -25,6 +31,11 @@ namespace Stephen.JsonSerializer
 		public NumberToken(string value)
 		{
 			Value = value;
+		}
+
+		public override string ToString()
+		{
+			return $"num:{Value}";
 		}
 	}
 
@@ -179,44 +190,74 @@ namespace Stephen.JsonSerializer
 			var token = tokens[index];
 			if (token is StringToken stringToken)
 				return new JsonObjectValue { Value = stringToken.Value };
-			else if (token is NumberToken numberToken)
+			if (token is NumberToken numberToken)
 				return new JsonObjectValue { Value = numberToken.Value };
-			else if (token is UnquotedConstantToken unquotedConstantToken)
+			if (token is UnquotedConstantToken unquotedConstantToken)
 				return new JsonObjectValue { Value = unquotedConstantToken.Value };
-			else if (token is ObjectStartToken)
+			if (token is ObjectStartToken)
 				return ProcessObject(tokens, ref index);
-			else
-				return null;
+			if (token is ListStartToken)
+				return ProcessList(tokens, ref index);
+			return null;
+		}
+
+		private JsonObject ProcessList(JsonToken[] tokens, ref int index)
+		{
+			//current token should be a start list token
+			Debug.Assert(tokens[index] is ListStartToken);
+			
+			var list = new JsonObjectList();
+			var token = tokens[++index];
+			while (token is not ListEndToken && index < tokens.Length)
+			{
+				if (token is StringToken stringToken)
+					list.Array.Add(new JsonObjectValue{Value = stringToken.Value});
+				else if (token is ObjectStartToken)
+					list.Array.Add(ProcessObject(tokens, ref index));
+				else if (token is ListStartToken)
+					list.Array.Add(ProcessList(tokens, ref index));
+				token = tokens[++index];
+			}
+			
+			//current token should be end list
+			Debug.Assert(token is ListEndToken);
+			return list;
 		}
 
 		private JsonObject ProcessObject(JsonToken[] tokens, ref int index)
 		{
+			//current token should be objectstart
+			Debug.Assert(tokens[index] is ObjectStartToken);
+			
 			var obj = new JsonObjectComplex();
-			index++;
-			var token = tokens[index];
+			var token = tokens[++index];
 			while (token is not ObjectEndToken && index < tokens.Length)
 			{
-				token = tokens[index++];
 				if (token is StringToken nameToken)
 				{
-					token = tokens[index++];
-					if (token is MemberSeparatorToken separatorToken)
+					token = tokens[++index];
+					if (token is MemberSeparatorToken)
 					{
 						//next token is either constant or complex or list
+						index++;
 						var value = ProcessTokens(tokens, ref index);
 						obj.Complex[nameToken.Value] = value;
-						index++;
 					}					
 					else
 						throw new Exception("Invalid token - expected separator");
 				}
-				else if (token is CommaToken commaToken)
-					continue;
-				else if (token is ObjectEndToken objectEndToken)
-					continue;
+				else if (token is CommaToken)
+					; //do nothing
+				else if (token is ObjectEndToken)
+					; //do nothing
 				else
 					throw new Exception("Invalid token - expected name");
+				
+				token = tokens[++index];
 			}
+			
+			//the current token should be an end token
+			Debug.Assert(token is ObjectEndToken);
 			return obj;
 		}
 	}

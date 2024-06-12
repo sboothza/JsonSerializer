@@ -188,6 +188,26 @@ namespace Stephen.JsonSerializer.Tests
 			Assert.AreEqual(typeof(ListEndToken), result[10].GetType());
 		}
 
+		[Test]
+		public void TestObjectList()
+		{
+			var json = "{\n    \"list\":[\n        \"value1\",\n        \"value2\"\n    ]\n}";
+			var parser = new JsonParser();
+			var result = parser.Parse(json);
+			foreach (var item in result)
+				Console.WriteLine(item);
+		}
+		
+		[Test]
+		public void TestObjectListObject()
+		{
+			var json = "{\n    \"list\":[\n        {\"Value\":\"value1\"},\n        {\"Value\":\"value2\"}\n    ]\n}";
+			var parser = new JsonParser();
+			var result = parser.Parse(json);
+			foreach (var item in result)
+				Console.WriteLine(item);
+		}
+
 
 		[Test]
 		public void TestTokeniseJson()
