@@ -6,183 +6,208 @@ using System.Linq;
 
 namespace Stephen.JsonSerializer
 {
-	public static class JsonSerializer
-	{
-		public static string Serialize(object source, JsonSerializerOptions options = null)
-		{
-			var writer = new StringWriter();
-			Serialize(source, writer, options);
-			return writer.ToString();
-		}
+    public static class JsonSerializer
+    {
+        public static string Serialize(object source, JsonSerializerOptions options = null)
+        {
+            var writer = new StringWriter();
+            Serialize(source, writer, options);
+            return writer.ToString();
+        }
 
-		private static void Serialize(object source, TextWriter writer, JsonSerializerOptions options)
-		{
-			if (source is null)
-			{
-				writer.Write("null");
-				return;
-			}
+        private static void Serialize(object source, TextWriter writer, JsonSerializerOptions options)
+        {
+            if (source is null)
+            {
+                writer.Write("null");
+                return;
+            }
 
-			options ??= new JsonSerializerOptions();
+            options ??= new JsonSerializerOptions();
 
-			if (source.Flatten(out var result))
-			{
-				writer.Write(result);
-				return;
-			}
+            if (source.Flatten(out var result))
+            {
+                writer.Write(result);
+                return;
+            }
 
-			//complex
-			if (source is IEnumerable sourceEnumerable)
-			{
-				if (sourceEnumerable is IDictionary dictionarySource)
-				{
-					//handle dictionary
-					writer.Write("{");
+            //complex
+            if (source is IEnumerable sourceEnumerable)
+            {
+                if (sourceEnumerable is IDictionary dictionarySource)
+                {
+                    //handle dictionary
+                    writer.Write("{");
 
-					var dictionaryEntries = dictionarySource.GetEnumerator()
-						.Cast<DictionaryEntry>();
+                    var dictionaryEntries = dictionarySource.GetEnumerator()
+                                                            .Cast<DictionaryEntry>();
 
-					dictionaryEntries.ProcessList(entry =>
-					{
-						writer.Write($"\"{entry.Key}\" : ");
-						Serialize(entry.Value, writer, options);
+                    dictionaryEntries.ProcessList(entry =>
+                    {
+                        writer.Write($"\"{entry.Key}\" : ");
+                        Serialize(entry.Value, writer, options);
 
-						writer.Write(",");
-					}, entry =>
-					{
-						writer.Write($"\"{entry.Key}\" : ");
-						Serialize(entry.Value, writer, options);
-					});
+                        writer.Write(",");
+                    }, entry =>
+                    {
+                        writer.Write($"\"{entry.Key}\" : ");
+                        Serialize(entry.Value, writer, options);
+                    });
 
-					writer.Write("}");
-					return;
-				}
+                    writer.Write("}");
+                    return;
+                }
 
-				//handle list
-				writer.Write("[");
+                //handle list
+                writer.Write("[");
 
-				var listEntries = sourceEnumerable.Cast<object>();
+                var listEntries = sourceEnumerable.Cast<object>();
 
-				listEntries.ProcessList(o =>
-				{
-					Serialize(o, writer, options);
-					writer.Write(",");
-				}, o => Serialize(o, writer, options));
+                listEntries.ProcessList(o =>
+                {
+                    Serialize(o, writer, options);
+                    writer.Write(",");
+                }, o => Serialize(o, writer, options));
 
-				writer.Write("]");
-				return;
-			}
+                writer.Write("]");
+                return;
+            }
 
-			//single object
-			writer.Write("{");
+            //single object
+            writer.Write("{");
 
-			var entries = new List<PropertyTuple>();
-			var props = source.GetType().GetProperties()
-				.Select(p => new
-				{
-					prop = p,
-					name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Name ?? p.Name,
-					ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Ignore ?? false
-				}).Where(pn => options.IgnoreAttributes || !pn.ignore);
+            var entries = new List<PropertyTuple>();
+            var props = source.GetType()
+                              .GetProperties()
+                              .Select(p => new
+                              {
+                                  prop = p,
+                                  name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
+                                                                  .FirstOrDefault())?.Name ?? p.Name,
+                                  ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
+                                                                    .FirstOrDefault())?.Ignore ?? false
+                              })
+                              .Where(pn => options.IgnoreAttributes || !pn.ignore);
 
-			foreach (var prop in props)
-			{
-				if (options.IgnoreNulls && source.GetFieldOrPropertyValue(prop.prop.Name) is null)
-					continue;
-				else
-				{
-					var entry = PropertyTuple.Create(options, source, prop.prop.Name, options.IgnoreAttributes ? prop.prop.Name : prop.name);
-					if (entry != null)
-						entries.Add(entry);
-				}
-			}
+            foreach (var prop in props)
+            {
+                if (options.IgnoreNulls && source.GetFieldOrPropertyValue(prop.prop.Name) is null)
+                    continue;
+                else
+                {
+                    var entry = PropertyTuple.Create(options, source, prop.prop.Name,
+                        options.IgnoreAttributes ? prop.prop.Name : prop.name);
+                    if (entry != null)
+                        entries.Add(entry);
+                }
+            }
 
-			entries.ProcessList(tuple =>
-			{
-				writer.Write($"\"{tuple.OutputName}\" : ");
-				Serialize(tuple.Value, writer, options);
-				writer.Write(",");
-			}, tuple =>
-			{
-				writer.Write($"\"{tuple.OutputName}\" : ");
-				Serialize(tuple.Value, writer, options);
-			});
+            entries.ProcessList(tuple =>
+            {
+                writer.Write($"\"{tuple.OutputName}\" : ");
+                Serialize(tuple.Value, writer, options);
+                writer.Write(",");
+            }, tuple =>
+            {
+                writer.Write($"\"{tuple.OutputName}\" : ");
+                Serialize(tuple.Value, writer, options);
+            });
 
-			writer.Write("}");
-		}
+            writer.Write("}");
+        }
 
-		public static T Deserialize<T>(string json, JsonSerializerOptions options)
-		{
-			return (T)Deserialize(json, typeof(T), options);
-		}
+        public static T Deserialize<T>(string json, JsonSerializerOptions options = null)
+        {
+            return (T)Deserialize(json, typeof(T), options);
+        }
 
-		public static object Deserialize(string json, Type type, JsonSerializerOptions options)
-		{
-			var parser = new JsonParser();
-			var tokens = parser.Parse(json);
-			var jsonObject = parser.ProcessTokens(tokens);
-			options ??= new JsonSerializerOptions();
-			return Deserialize(jsonObject, type, options);
-		}
+        public static object Deserialize(string json, Type type, JsonSerializerOptions options)
+        {
+            var parser = new JsonParser();
+            var tokens = parser.Parse(json);
+            var jsonObject = parser.ProcessTokens(tokens);
+            options ??= JsonSerializerOptions.Empty;
+            return Deserialize(jsonObject, type, options);
+        }
 
+        private static object Deserialize(JsonObject obj, Type type, JsonSerializerOptions options)
+        {
+            if (obj == null)
+                return null;
 
-		private static object Deserialize(JsonObject obj, Type type, JsonSerializerOptions options)
-		{
-			if (obj == null)
-				return null;
+            if (obj is JsonObjectValue jsonPrimitive)
+            {
+                if (jsonPrimitive.Value is string strValue)
+                {
+                    if (strValue == "null")
+                        return null;
+                    if (strValue.StartsWith("/Date("))
+                    {
+                        long unix = long.Parse(strValue.Replace("/Date(", "")
+                                                       .Replace(")/", ""));
+                        var value = DateTimeOffset.FromUnixTimeMilliseconds(unix);
+                        return value.DateTime;
+                    }
+                }
 
-			if (obj is JsonObjectValue jsonPrimitive)
-			{
-				if (jsonPrimitive.Value is string strValue)
-				{
-					if (strValue == "null")
-						return null;
-					if (strValue.StartsWith("/Date("))
-					{
-						long unix = long.Parse(strValue.Replace("/Date(", "").Replace(")/", ""));
-						var value = DateTimeOffset.FromUnixTimeMilliseconds(unix);
-						return value.DateTime;
-					}
-				}
+                return Convert.ChangeType(jsonPrimitive.Value, type);
+            }
+            if (obj is JsonObjectComplex jsonObjectComplex)
+            {
+                object result = Activator.CreateInstance(type);
 
-				return jsonPrimitive.Value;
-			}
-			if (obj is JsonObjectComplex jsonObjectComplex)
-			{
-				object result = Activator.CreateInstance(type);
+                var props = type.GetProperties()
+                                .Select(p => new
+                                {
+                                    prop = p,
+                                    name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
+                                                                    .FirstOrDefault())?.Name ?? p.Name,
+                                    ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true)
+                                                                      .FirstOrDefault())?.Ignore ?? false
+                                })
+                                .Where(pn => options.IgnoreAttributes || !pn.ignore);
 
-				var props = type.GetProperties()
-					.Select(p => new
-					{
-						prop = p,
-						name = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Name ?? p.Name,
-						ignore = ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), true).FirstOrDefault())?.Ignore ?? false
-					}).Where(pn => options.IgnoreAttributes || !pn.ignore);
+                foreach (var prop in props)
+                {
+                    if (prop.prop.CanWrite)
+                    {
+                        var name = prop.name;
+                        JsonObject jsonValue;
+                        if (options.RemapFields.TryGetValue(name, out string mappedName))
+                            jsonValue = jsonObjectComplex.Complex[mappedName];
+                        else
+                            jsonValue = jsonObjectComplex.Complex[name];
+                        var propertyType = GetBaseType(prop.prop.PropertyType);
+                        var value = Deserialize(jsonValue, propertyType, options);
+                        prop.prop.SetValue(result, value);
+                    }
+                }
 
-				foreach (var prop in props)
-				{
-					if (prop.prop.CanWrite)
-					{
-						var name = prop.name;
-						var jsonValue = jsonObjectComplex.Complex[name];
-						var value = Deserialize(jsonValue, prop.prop.PropertyType, options);
-						prop.prop.SetValue(result, value);
-					}
-				}
+                return result;
+            }
+            if (obj is JsonObjectList jsonList)
+            {
+                var elementType = type.GetGenericArguments()[0];
+                IList list = (IList)Activator.CreateInstance(type);
+                foreach (var item in jsonList.Array)
+                {
+                    list.Add(Deserialize(item, elementType, options));
+                }
+                return list;
+            }
+            throw new IndexOutOfRangeException("Could not deserialize");
+        }
 
-				return result;
-			}
-			if (obj is JsonObjectList jsonList)
-			{
-				var listType = typeof(List<>).MakeGenericType(type);
-				IList list = (IList)Activator.CreateInstance(listType);
-				foreach (var item in jsonList.Array)
-				{
-					list.Add(Deserialize(item, type, options));
-				}
-				return list;
-			}
-			throw new IndexOutOfRangeException("Could not deserialize");
-		}
-	}
+        private static Type GetBaseType(Type propertyType)
+        {
+            if (propertyType.IsGenericType)
+            {
+                if (propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    return propertyType.GetGenericArguments()[0];
+
+                // throw new NotImplementedException($"Unknown type {propertyType.Name}");
+            }
+            return propertyType;
+        }
+    }
 }
