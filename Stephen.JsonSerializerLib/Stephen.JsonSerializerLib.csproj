@@ -10,7 +10,7 @@
         <Description>JsonSerializer</Description>
         <PackageProjectUrl>https://github.com/sboothza/JsonSerializer</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <Version>3.0.0</Version>
+        <Version>3.0.1</Version>
     </PropertyGroup>
 
     <PropertyGroup>
